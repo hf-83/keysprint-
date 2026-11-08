@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useState, useEffect, useRef } from 'react';
-import { Trophy, Volume2, VolumeX, Eye, Flag, Zap, RotateCcw, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Trophy, Volume2, VolumeX, Eye, Flag, Zap, RotateCcw, AlertTriangle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { SvgCar, CarModelId } from '../../components/common/SvgCar';
 import { useRace } from '../../context/RaceContext';
 import { useAuth } from '../../context/AuthContext';
@@ -18,7 +18,7 @@ export const Screen13LiveRace: React.FC<Screen13LiveRaceProps> = ({
   passageText: propPassageText
 }: Screen13LiveRaceProps) => {
   const { user } = useAuth();
-  const { passageText: racePassage, players, sendProgress, submitFinalRace, roomMeta } = useRace();
+  const { passageText: racePassage, players, sendProgress, submitFinalRace, roomMeta, leaveRoom } = useRace();
   
   const currentTrack = TRACKS_DATA.find(t => t.id === roomMeta?.trackId) || TRACKS_DATA[0];
   const activePassage = propPassageText || racePassage || "The quick brown fox jumps over the lazy dog while sports cars thunder down the championship asphalt highway at breakneck velocity.";
@@ -82,13 +82,35 @@ export const Screen13LiveRace: React.FC<Screen13LiveRaceProps> = ({
   };
 
   const isOpponent = (p: (typeof players)[0]) => {
-    if (p.socketId === 'local_you') return false;
+    if (p.socketId === 'local_you' || p.socketId === 'local-you') return false;
     if (user?.id && p.userId === user.id) return false;
     return true;
   };
 
-  // Check if finished
-  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Immediate, automatic finish transition
+  const handleFinishRace = useCallback((finalWpm: number, finalAccuracy: number) => {
+    if (isFinishing) return;
+    setIsFinishing(true);
+
+    const fasterOpponents = players.filter(p => isOpponent(p) && p.finished).length;
+    const finalPlace = Math.max(1, fasterOpponents + 1);
+
+    // Non-blocking submission: will never freeze the UI transition
+    submitFinalRace({
+      wpm: Math.max(1, finalWpm),
+      accuracy: finalAccuracy,
+      durationSec: Math.max(1, elapsedSeconds),
+      place: finalPlace
+    }).catch((err) => console.warn('Race submit background notice:', err));
+
+    // Immediately route to podium results
+    setTimeout(() => {
+      onNavigate('screen-16');
+    }, 300);
+  }, [isFinishing, players, elapsedSeconds, onNavigate, submitFinalRace]);
+
+  // Handle keystroke input
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isFinishing) return;
     const val = e.target.value;
 
@@ -130,29 +152,23 @@ export const Screen13LiveRace: React.FC<Screen13LiveRaceProps> = ({
 
     sendProgress(nextState.progressPercent, nextState.wpm, nextState.accuracy);
 
-    // Check if finished
-    if (nextState.isComplete && !isFinishing) {
-      setIsFinishing(true);
+    // Automatic finish check: triggers as soon as passage is finished
+    const isFinished = 
+      nextState.isComplete || 
+      (nextState.correctPrefixLength >= activePassage.trim().length) ||
+      (val.trim() === activePassage.trim());
 
-      const fasterOpponents = players.filter(p => isOpponent(p) && p.finished).length;
-      const finalPlace = fasterOpponents + 1;
-
-      try {
-        await submitFinalRace({
-          wpm: nextState.wpm,
-          accuracy: nextState.accuracy,
-          durationSec: Math.max(1, elapsedSeconds),
-          place: finalPlace
-        });
-      } catch {
-        // Fallback
-      }
-
-      setTimeout(() => {
-        onNavigate('screen-16'); // Transition to podium celebration!
-      }, 500);
+    if (isFinished && !isFinishing) {
+      handleFinishRace(nextState.wpm, nextState.accuracy);
     }
   };
+
+  // Watch for completion in state as secondary safeguard
+  useEffect(() => {
+    if (!isFinishing && (typingState.isComplete || typingState.progressPercent >= 100)) {
+      handleFinishRace(typingState.wpm, typingState.accuracy);
+    }
+  }, [typingState.isComplete, typingState.progressPercent, isFinishing, handleFinishRace, typingState.wpm, typingState.accuracy]);
 
   const userProgress = typingState.progressPercent;
 
@@ -192,6 +208,28 @@ export const Screen13LiveRace: React.FC<Screen13LiveRaceProps> = ({
           {/* Status Bar */}
           <div className="race-status-bar">
             <div className="flex-center gap-2">
+              <button 
+                type="button"
+                className="btn btn-outline btn-sm flex-center gap-1"
+                onClick={() => {
+                  leaveRoom();
+                  onNavigate('screen-01');
+                }}
+                title="Exit race and return to Home"
+                style={{
+                  borderColor: '#CBD5E1',
+                  background: '#FFFFFF',
+                  color: '#334155',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  padding: '5px 12px',
+                  borderRadius: '10px'
+                }}
+              >
+                <ArrowLeft size={15} />
+                <span>Exit Race</span>
+              </button>
+
               <div className="lap-counter-pill">
                 <span>Position: #{userRank} / {allRacers.length}</span>
               </div>
@@ -393,13 +431,6 @@ export const Screen13LiveRace: React.FC<Screen13LiveRaceProps> = ({
             >
               {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
               <span>{soundEnabled ? 'Engine SFX On' : 'Muted'}</span>
-            </button>
-
-            <button 
-              className="btn btn-outline btn-sm"
-              onClick={() => onNavigate('screen-16')}
-            >
-              <span>Finish Test (Screen 16)</span>
             </button>
           </div>
         </div>

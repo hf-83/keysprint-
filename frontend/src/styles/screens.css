@@ -1009,6 +1009,294 @@
   color: var(--text-primary);
 }
 
+/* 10. MATCHMAKING & LOBBY SCREENS (SCREENS 11 & 12) */
+.queue-screen, .pre-race-screen {
+  padding: 32px 0 60px;
+}
+
+.queue-container, .pre-race-card {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 36px 32px;
+  background: #FFFFFF;
+  border-radius: 24px;
+  border: 2px solid #FED7AA;
+  box-shadow: 0 12px 32px rgba(234, 88, 12, 0.08);
+}
+
+.queue-spinner-ring {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.spinner-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.queue-settings-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #FFF7ED;
+  border: 1.5px solid #FDBA74;
+  border-radius: 14px;
+  padding: 12px 20px;
+  margin: 24px 0;
+}
+
+.setting-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.queue-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 28px 0;
+}
+
+@media (max-width: 768px) {
+  .queue-slots-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.slot-card {
+  background: #F8FAFC;
+  border: 2px solid #E2E8F0;
+  border-radius: 18px;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  transition: all 0.2s ease;
+  min-height: 200px;
+}
+
+.slot-card.slot-you {
+  background: #FFF7ED;
+  border-color: #EA580C;
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.15);
+}
+
+.slot-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.slot-number {
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.you-tag {
+  background: #EA580C;
+  color: #FFFFFF;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.bot-tag {
+  background: #3B82F6;
+  color: #FFFFFF;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.slot-car-preview {
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.slot-player-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #0F172A;
+  margin-top: auto;
+}
+
+.slot-card.slot-empty {
+  border: 2px dashed #CBD5E1;
+  background: #F8FAFC;
+}
+
+.empty-lane-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94A3B8;
+  text-transform: uppercase;
+  width: 100%;
+  text-align: left;
+}
+
+.empty-placeholder-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  color: #94A3B8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* SCREEN 12: PRE-RACE COUNTDOWN LOBBY */
+.countdown-display-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0 24px;
+}
+
+.countdown-pulse-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #EA580C, #F97316);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(234, 88, 12, 0.4);
+  animation: pulse-countdown 1s ease-in-out infinite;
+}
+
+.countdown-pulse-circle.go {
+  background: linear-gradient(135deg, #16A34A, #22C55E);
+  box-shadow: 0 0 35px rgba(22, 163, 74, 0.5);
+}
+
+@keyframes pulse-countdown {
+  0% { transform: scale(0.95); opacity: 0.9; }
+  50% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.9; }
+}
+
+.countdown-big-number {
+  font-size: 54px;
+  font-weight: 900;
+  color: #FFFFFF;
+  font-family: inherit;
+  letter-spacing: -1px;
+}
+
+.countdown-hint {
+  margin-top: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #64748B;
+  letter-spacing: 0.5px;
+}
+
+.lineup-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .lineup-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.lineup-card, .lineup-racer-card {
+  background: #F8FAFC;
+  border: 2px solid #E2E8F0;
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.lineup-card.lineup-you, .lineup-racer-card.border-orange {
+  background: #FFF7ED;
+  border-color: #EA580C;
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.15);
+}
+
+.lane-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  align-self: flex-start;
+}
+
+.racer-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.car-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+.lineup-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lineup-car-wrap {
+  height: 85px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px 0;
+}
+
+.lineup-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: #0F172A;
+}
+
 /* 11. LIVE RACE SCREEN (SCREEN 13) */
 .live-race-screen {
   padding: 24px 0 40px;

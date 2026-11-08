@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useEffect } from 'react';
-import { Loader2, X, ShieldCheck, MapPin, Zap } from 'lucide-react';
+import { Loader2, X, ShieldCheck, MapPin, Zap, ArrowLeft } from 'lucide-react';
 import { SvgCar, CarModelId } from '../../components/common/SvgCar';
-import { useRace } from '../../context/RaceContext';
+import { useRace, RacePlayer } from '../../context/RaceContext';
 import { useAuth } from '../../context/AuthContext';
 
 interface Screen11MatchmakingQueueProps {
@@ -11,7 +11,7 @@ interface Screen11MatchmakingQueueProps {
 
 export const Screen11MatchmakingQueue: React.FC<Screen11MatchmakingQueueProps> = ({ onNavigate }: Screen11MatchmakingQueueProps) => {
   const { user } = useAuth();
-  const { roomId, roomStatus, players, countdown, joinMatchmaking, leaveMatchmaking } = useRace();
+  const { roomId, roomStatus, players, countdown, joinMatchmaking, leaveMatchmaking, startBotRace } = useRace();
 
   useEffect(() => {
     joinMatchmaking();
@@ -28,15 +28,60 @@ export const Screen11MatchmakingQueue: React.FC<Screen11MatchmakingQueueProps> =
     }
   }, [roomStatus, onNavigate]);
 
+  // Fallback: If no other human racers join within 3.5s, auto-launch match with bots so user is never stuck
+  useEffect(() => {
+    const fallbackTimer = setTimeout(async () => {
+      if (roomStatus === 'waiting' && players.length <= 1) {
+        await startBotRace('normal');
+        onNavigate('screen-13');
+      }
+    }, 3500);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [roomStatus, players.length, startBotRace, onNavigate]);
+
   const handleCancel = () => {
     leaveMatchmaking();
-    onNavigate('screen-10');
+    onNavigate('screen-01');
   };
+
+  const equippedItem = user?.inventory?.find(i => i.isEquipped);
+  const userCarId = (equippedItem?.itemId as CarModelId) || 'blaze';
+  const userNickname = user?.profile?.nickname || 'You';
+  const userAvatar = user?.profile?.avatarId || '🏎️';
+
+  // Ensure current user is visibly on Lane 1 immediately
+  const displayPlayers: RacePlayer[] = players.length > 0 ? players : [
+    {
+      socketId: 'local-you',
+      userId: user?.id || 'you',
+      nickname: userNickname,
+      carId: userCarId,
+      avatar: userAvatar,
+      progress: 0,
+      wpm: 0,
+      accuracy: 100,
+      finished: false
+    }
+  ];
 
   return (
     <div className="screen-page queue-screen">
       <div className="content-wrapper">
         <div className="queue-container card">
+          {/* Top Navigation */}
+          <div className="mb-3" style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <button 
+              type="button"
+              className="btn btn-outline btn-sm flex-center gap-1"
+              onClick={handleCancel}
+              style={{ borderRadius: '10px', fontSize: '12px', padding: '5px 12px' }}
+            >
+              <ArrowLeft size={15} />
+              <span>Back to Home</span>
+            </button>
+          </div>
+
           {/* Top Status */}
           <div className="queue-top-status text-center">
             <div className="queue-spinner-ring">
@@ -69,10 +114,10 @@ export const Screen11MatchmakingQueue: React.FC<Screen11MatchmakingQueueProps> =
             </div>
           </div>
 
-          {/* Racer Slots (Real Socket Players) */}
+          {/* Racer Slots */}
           <div className="queue-slots-grid">
-            {players.map((slot, idx) => {
-              const isYou = slot.userId === user?.id || slot.socketId === slot.userId;
+            {displayPlayers.map((slot, idx) => {
+              const isYou = slot.userId === user?.id || slot.socketId === 'local-you' || slot.socketId === slot.userId;
               return (
                 <div key={slot.socketId} className={`slot-card ${isYou ? 'slot-you' : ''}`}>
                   <div className="slot-header">
@@ -92,9 +137,9 @@ export const Screen11MatchmakingQueue: React.FC<Screen11MatchmakingQueueProps> =
             })}
 
             {/* Empty waiting slots if room not yet full */}
-            {Array.from({ length: Math.max(0, 4 - players.length) }).map((_, i) => (
+            {Array.from({ length: Math.max(0, 4 - displayPlayers.length) }).map((_, i) => (
               <div key={i} className="slot-card slot-empty">
-                <span className="empty-lane-text">Lane {players.length + i + 1}</span>
+                <span className="empty-lane-text">Lane {displayPlayers.length + i + 1}</span>
                 <div className="empty-placeholder-ring">
                   <span>Searching...</span>
                 </div>
@@ -110,12 +155,6 @@ export const Screen11MatchmakingQueue: React.FC<Screen11MatchmakingQueueProps> =
             >
               <X size={16} />
               <span>Cancel Matchmaking</span>
-            </button>
-            <button 
-              className="btn btn-primary ml-2"
-              onClick={() => onNavigate('screen-12')}
-            >
-              <span>Instant Grid (Screen 12)</span>
             </button>
           </div>
         </div>

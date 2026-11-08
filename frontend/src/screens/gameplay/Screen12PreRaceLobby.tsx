@@ -61,7 +61,9 @@ export const Screen12PreRaceLobby: React.FC<Screen12PreRaceLobbyProps> = ({ onNa
               return (
                 <div key={player.socketId} className={`lineup-racer-card card-cream ${isYou ? 'border-orange' : ''}`}>
                   <span className="lane-badge">Lane {idx + 1}</span>
-                  <SvgCar id={(player.carId as CarModelId) || 'blaze'} size={130} />
+                  <div className="lineup-car-wrap">
+                    <SvgCar id={(player.carId as CarModelId) || 'blaze'} size={120} />
+                  </div>
                   <div className="racer-meta">
                     <strong>{player.nickname} {isYou ? '(You)' : ''}</strong>
                     <span className="car-label">{player.isBot ? 'AI Contender' : 'Live Driver'}</span>
@@ -69,16 +71,6 @@ export const Screen12PreRaceLobby: React.FC<Screen12PreRaceLobbyProps> = ({ onNa
                 </div>
               );
             })}
-          </div>
-
-          {/* Manual Jump to Race */}
-          <div className="text-center mt-4">
-            <button 
-              className="btn btn-primary"
-              onClick={() => onNavigate('screen-13')}
-            >
-              <span>Instant Start Race (Screen 13)</span>
-            </button>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Video, Users, Trophy, Sparkles, Gift, ShieldCheck, ChevronRight, Zap, Target } from 'lucide-react';
+import { Play, Keyboard, Users, Trophy, Sparkles, Gift, ChevronRight, Zap, Target } from 'lucide-react';
 import { SvgCar } from '../../components/common/SvgCar';
 import { GLOBAL_LEADERBOARD } from '../../data/mockData';
 import { CARS_DATA } from '../../data/carsData';
@@ -20,7 +20,7 @@ export const Screen01Homepage: React.FC<Screen01HomepageProps> = ({ onNavigate }
         console.warn('Guest session notice:', err);
       }
     }
-    onNavigate('screen-10');
+    onNavigate('screen-11');
   };
 
   return (
@@ -30,18 +30,18 @@ export const Screen01Homepage: React.FC<Screen01HomepageProps> = ({ onNavigate }
         <div className="content-wrapper hero-inner">
           <div className="hero-content">
             <div className="hero-pill-badge">
-              <span className="badge-flame">🔥</span>
-              <span>The Next-Gen Typing Racing Platform</span>
+              <span className="badge-flame">🏎️</span>
+              <span>Real-Time Multiplayer Typing Racer</span>
             </div>
             
             <h1 className="hero-title">
-              Type. Race.<br />
-              <span className="hero-title-highlight">Have Fun!</span>
+              Type Fast.<br />
+              <span className="hero-title-highlight">Race Faster.</span>
             </h1>
 
             <p className="hero-description">
-              A fun and exciting typing game for everyone. Race with real players, 
-              unlock awesome cars, and improve your typing skills in high-octane 2D cartoon sprints.
+              Put your typing skills on the asphalt! Race live against other drivers in real-time, 
+              boost your WPM, unlock high-octane supercars, and dominate the leaderboard.
             </p>
 
             <div className="hero-cta-group">
@@ -50,35 +50,54 @@ export const Screen01Homepage: React.FC<Screen01HomepageProps> = ({ onNavigate }
                 onClick={handlePlayNow}
               >
                 <Play size={20} fill="#FFFFFF" />
-                <span>Play Now</span>
+                <span>Start a Race</span>
               </button>
 
               <button 
                 className="btn btn-secondary btn-lg"
-                onClick={() => onNavigate('screen-02')}
+                onClick={() => onNavigate('screen-14')}
               >
-                <Video size={18} />
-                <span>Watch Video</span>
+                <Keyboard size={18} />
+                <span>Solo Practice</span>
+              </button>
+            </div>
+
+            <div className="hero-sub-modes" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', fontSize: '13px', color: '#64748B' }}>
+              <span>Or choose:</span>
+              <button 
+                type="button"
+                onClick={() => onNavigate('screen-17')}
+                style={{ background: 'none', border: 'none', color: '#EA580C', fontWeight: 600, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+              >
+                Private Room with Friends
+              </button>
+              <span>•</span>
+              <button 
+                type="button"
+                onClick={() => onNavigate('screen-15')}
+                style={{ background: 'none', border: 'none', color: '#EA580C', fontWeight: 600, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+              >
+                Race Against Bots
               </button>
             </div>
 
             {/* Quick Feature Chips */}
             <div className="hero-feature-chips">
-              <div className="feature-chip">
+              <div className="feature-chip" onClick={handlePlayNow} style={{ cursor: 'pointer' }}>
                 <Users size={16} className="text-orange" />
-                <span>Multiplayer Races</span>
+                <span>Live Multiplayer</span>
               </div>
-              <div className="feature-chip">
+              <div className="feature-chip" onClick={() => onNavigate('screen-14')} style={{ cursor: 'pointer' }}>
+                <Keyboard size={16} className="text-orange" />
+                <span>Solo Practice</span>
+              </div>
+              <div className="feature-chip" onClick={() => onNavigate('screen-24')} style={{ cursor: 'pointer' }}>
                 <Sparkles size={16} className="text-orange" />
-                <span>Custom Cars</span>
+                <span>Unlockable Cars</span>
               </div>
-              <div className="feature-chip">
+              <div className="feature-chip" onClick={() => onNavigate('screen-29')} style={{ cursor: 'pointer' }}>
                 <Trophy size={16} className="text-orange" />
-                <span>Global Leaderboard</span>
-              </div>
-              <div className="feature-chip">
-                <Gift size={16} className="text-orange" />
-                <span>Daily Rewards</span>
+                <span>Global Rankings</span>
               </div>
             </div>
           </div>
@@ -280,22 +299,23 @@ export const Screen01Homepage: React.FC<Screen01HomepageProps> = ({ onNavigate }
         <div className="content-wrapper">
           <div className="cta-card">
             <div className="cta-content">
-              <span className="badge badge-orange">Ready, Set, Go!</span>
+              <span className="badge badge-orange">Start Racing Today</span>
               <h2>Ready to Test Your Typing Speed?</h2>
-              <p>Jump right into a public multiplayer race as a guest or create a free account to track your progress.</p>
+              <p>Jump right into a public multiplayer race as a guest or practice solo to sharpen your keystrokes.</p>
               <div className="cta-buttons">
                 <button 
                   className="btn btn-primary btn-lg"
-                  onClick={() => onNavigate('screen-10')}
+                  onClick={handlePlayNow}
                 >
                   <Play size={20} fill="#FFFFFF" />
-                  <span>Start Racing Now</span>
+                  <span>Start a Race</span>
                 </button>
                 <button 
                   className="btn btn-secondary btn-lg"
-                  onClick={() => onNavigate('screen-09')}
+                  onClick={() => onNavigate('screen-14')}
                 >
-                  <span>Quick Guest Play</span>
+                  <Keyboard size={18} />
+                  <span>Solo Practice</span>
                 </button>
               </div>
             </div>

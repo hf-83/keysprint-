@@ -253,10 +253,10 @@ export const Screen14Practice: React.FC<Screen14PracticeProps> = ({ onNavigate }
             <button 
               type="button" 
               className="btn btn-outline btn-sm flex-center gap-1"
-              onClick={() => onNavigate('screen-33')}
+              onClick={() => onNavigate('screen-01')}
             >
               <ArrowLeft size={14} />
-              <span>All Modes</span>
+              <span>Back to Home</span>
             </button>
             <div className="flex-center gap-2">
               <span className="badge badge-orange">Solo Academy</span>

@@ -81,8 +81,53 @@ import { ScreenOverviewBoard } from './screens/overview/ScreenOverviewBoard';
 const AppContent: React.FC = () => {
   const { user, updateCoins, equipCar, purchaseCar } = useAuth();
   const { incomingChallenge, dismissChallenge, joinPrivateRoom } = useRace();
-  const [currentScreenId, setCurrentScreenId] = useState<string>('screen-01');
+  const [currentScreenId, setCurrentScreenId] = useState<string>(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      return window.location.hash.replace('#', '') || 'screen-01';
+    }
+    return 'screen-01';
+  });
+
+  const handleNavigate = React.useCallback((nextScreenId: string) => {
+    if (nextScreenId === currentScreenId) return;
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ screenId: nextScreenId }, '', `#${nextScreenId}`);
+    }
+    setCurrentScreenId(nextScreenId);
+  }, [currentScreenId]);
+
+  React.useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (e.state && e.state.screenId) {
+        setCurrentScreenId(e.state.screenId);
+      } else if (typeof window !== 'undefined') {
+        const hash = window.location.hash.replace('#', '');
+        setCurrentScreenId(hash || 'screen-01');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   const [viewport, setViewport] = useState<ViewportMode>('desktop');
+  const [showDevToolbar, setShowDevToolbar] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('dev') === 'true';
+    }
+    return false;
+  });
+
+  // Toggle Dev Toolbar hotkey (Ctrl+Shift+D or Cmd+Shift+D)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+        e.preventDefault();
+        setShowDevToolbar(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Handle URL invite parameter ?room=CODE
   const inviteHandledRef = React.useRef(false);
@@ -119,8 +164,8 @@ const AppContent: React.FC = () => {
       return (
         <AdminLayout
           currentAdminId={currentScreenId}
-          onNavigateAdmin={(id: string) => setCurrentScreenId(id)}
-          onExitAdmin={() => setCurrentScreenId('screen-01')}
+          onNavigateAdmin={(id: string) => handleNavigate(id)}
+          onExitAdmin={() => handleNavigate('screen-01')}
         >
           {currentScreenId === 'admin-01' && <Admin01Overview />}
           {currentScreenId === 'admin-02' && <Admin02UserManagement />}
@@ -139,70 +184,70 @@ const AppContent: React.FC = () => {
     switch (currentScreenId) {
       // SECTION A — PUBLIC
       case 'screen-01':
-        return <Screen01Homepage onNavigate={setCurrentScreenId} />;
+        return <Screen01Homepage onNavigate={handleNavigate} />;
       case 'screen-02':
-        return <Screen02HowToPlay onNavigate={setCurrentScreenId} />;
+        return <Screen02HowToPlay onNavigate={handleNavigate} />;
       case 'screen-03':
-        return <Screen03About onNavigate={setCurrentScreenId} />;
+        return <Screen03About onNavigate={handleNavigate} />;
 
       // SECTION B — AUTH
       case 'screen-04':
-        return <Screen04SignUp onNavigate={setCurrentScreenId} />;
+        return <Screen04SignUp onNavigate={handleNavigate} />;
       case 'screen-05':
-        return <Screen05Login onNavigate={setCurrentScreenId} />;
+        return <Screen05Login onNavigate={handleNavigate} />;
       case 'screen-06':
-        return <Screen06ForgotPassword onNavigate={setCurrentScreenId} />;
+        return <Screen06ForgotPassword onNavigate={handleNavigate} />;
       case 'screen-07':
-        return <Screen07ResetPassword onNavigate={setCurrentScreenId} />;
+        return <Screen07ResetPassword onNavigate={handleNavigate} />;
       case 'screen-08':
-        return <Screen08EmailVerification onNavigate={setCurrentScreenId} />;
+        return <Screen08EmailVerification onNavigate={handleNavigate} />;
       case 'screen-09':
-        return <Screen09GuestEntry onNavigate={setCurrentScreenId} />;
+        return <Screen09GuestEntry onNavigate={handleNavigate} />;
 
       // SECTION C — GAMEPLAY
       case 'screen-10':
-        return <Screen10RaceModeSelect onNavigate={setCurrentScreenId} />;
+        return <Screen10RaceModeSelect onNavigate={handleNavigate} />;
       case 'screen-11':
-        return <Screen11MatchmakingQueue onNavigate={setCurrentScreenId} />;
+        return <Screen11MatchmakingQueue onNavigate={handleNavigate} />;
       case 'screen-12':
-        return <Screen12PreRaceLobby onNavigate={setCurrentScreenId} />;
+        return <Screen12PreRaceLobby onNavigate={handleNavigate} />;
       case 'screen-13':
-        return <Screen13LiveRace onNavigate={setCurrentScreenId} />;
+        return <Screen13LiveRace onNavigate={handleNavigate} />;
       case 'screen-14':
-        return <Screen14Practice onNavigate={setCurrentScreenId} />;
+        return <Screen14Practice onNavigate={handleNavigate} />;
       case 'screen-15':
-        return <Screen15BotRace onNavigate={setCurrentScreenId} />;
+        return <Screen15BotRace onNavigate={handleNavigate} />;
       case 'screen-16':
-        return <Screen16RaceResults onNavigate={setCurrentScreenId} />;
+        return <Screen16RaceResults onNavigate={handleNavigate} />;
       case 'screen-17':
-        return <Screen17CreateRoom onNavigate={setCurrentScreenId} />;
+        return <Screen17CreateRoom onNavigate={handleNavigate} />;
       case 'screen-18':
-        return <Screen18RoomLobby onNavigate={setCurrentScreenId} />;
+        return <Screen18RoomLobby onNavigate={handleNavigate} />;
 
       // SECTION D — ACCOUNT
       case 'screen-19':
-        return <Screen19Dashboard onNavigate={setCurrentScreenId} level={liveLevel} />;
+        return <Screen19Dashboard onNavigate={handleNavigate} level={liveLevel} />;
       case 'screen-20':
-        return <Screen20Profile onNavigate={setCurrentScreenId} />;
+        return <Screen20Profile onNavigate={handleNavigate} />;
       case 'screen-21':
-        return <Screen21EditProfile onNavigate={setCurrentScreenId} />;
+        return <Screen21EditProfile onNavigate={handleNavigate} />;
       case 'screen-22':
-        return <Screen22Statistics onNavigate={setCurrentScreenId} />;
+        return <Screen22Statistics onNavigate={handleNavigate} />;
       case 'screen-23':
-        return <Screen23RaceHistory onNavigate={setCurrentScreenId} />;
+        return <Screen23RaceHistory onNavigate={handleNavigate} />;
 
       // SECTION E — GARAGE & SHOP
       case 'screen-24':
         return (
           <Screen24Garage 
-            onNavigate={setCurrentScreenId}
+            onNavigate={handleNavigate}
             equippedCarId={liveEquippedCar}
           />
         );
       case 'screen-25':
         return (
           <Screen25Shop 
-            onNavigate={setCurrentScreenId}
+            onNavigate={handleNavigate}
             coins={liveCoins}
           />
         );
@@ -218,81 +263,83 @@ const AppContent: React.FC = () => {
                 desc: 'Gold-plated aerodynamic composite chassis.'
               }}
               userCoins={liveCoins}
-              onClose={() => setCurrentScreenId('screen-25')}
+              onClose={() => handleNavigate('screen-25')}
               onConfirm={async (cost: number) => {
                 await purchaseCar('golden', cost);
-                setCurrentScreenId('screen-24');
+                handleNavigate('screen-24');
               }}
             />
           </div>
         );
       case 'screen-27':
-        return <Screen27Achievements onNavigate={setCurrentScreenId} />;
+        return <Screen27Achievements onNavigate={handleNavigate} />;
       case 'screen-28':
         return (
           <Screen28DailyChallenges 
-            onNavigate={setCurrentScreenId}
+            onNavigate={handleNavigate}
             onClaimReward={(c: number) => updateCoins(liveCoins + c)}
           />
         );
 
       // SECTION F — SOCIAL
       case 'screen-29':
-        return <Screen29Leaderboard onNavigate={setCurrentScreenId} />;
+        return <Screen29Leaderboard onNavigate={handleNavigate} />;
       case 'screen-30':
-        return <Screen30Friends onNavigate={setCurrentScreenId} />;
+        return <Screen30Friends onNavigate={handleNavigate} />;
       case 'screen-31':
-        return <Screen31Notifications onNavigate={setCurrentScreenId} />;
+        return <Screen31Notifications onNavigate={handleNavigate} />;
       case 'screen-32':
-        return <Screen32Tournaments onNavigate={setCurrentScreenId} />;
+        return <Screen32Tournaments onNavigate={handleNavigate} />;
 
       // SECTION G — PRACTICE
       case 'screen-33':
-        return <Screen33PracticeModes onNavigate={setCurrentScreenId} />;
+        return <Screen33PracticeModes onNavigate={handleNavigate} />;
       case 'screen-34':
-        return <Screen34PracticeResults onNavigate={setCurrentScreenId} />;
+        return <Screen34PracticeResults onNavigate={handleNavigate} />;
 
       // SECTION H — SETTINGS & SUPPORT
       case 'screen-35':
-        return <Screen35Settings onNavigate={setCurrentScreenId} />;
+        return <Screen35Settings onNavigate={handleNavigate} />;
       case 'screen-36':
-        return <Screen36HelpFAQ onNavigate={setCurrentScreenId} />;
+        return <Screen36HelpFAQ onNavigate={handleNavigate} />;
       case 'screen-37':
-        return <Screen37ContactReport onNavigate={setCurrentScreenId} />;
+        return <Screen37ContactReport onNavigate={handleNavigate} />;
       case 'screen-38':
-        return <Screen38Legal onNavigate={setCurrentScreenId} />;
+        return <Screen38Legal onNavigate={handleNavigate} />;
       case 'screen-39':
-        return <Screen39SystemStates onNavigate={setCurrentScreenId} />;
+        return <Screen39SystemStates onNavigate={handleNavigate} />;
 
       // SECTION J & K — RESPONSIVE & OVERVIEW
       case 'responsive-views':
-        return <ScreenResponsiveViews onNavigate={setCurrentScreenId} />;
+        return <ScreenResponsiveViews onNavigate={handleNavigate} />;
       case 'overview-board':
-        return <ScreenOverviewBoard onSelectScreen={setCurrentScreenId} />;
+        return <ScreenOverviewBoard onSelectScreen={handleNavigate} />;
 
       default:
-        return <Screen01Homepage onNavigate={setCurrentScreenId} />;
+        return <Screen01Homepage onNavigate={handleNavigate} />;
     }
   };
 
   return (
-    <div className={`app-root viewport-${viewport}`}>
-      {/* MASTER TOP TOOLBAR (Allows switching between all 50+ screens & viewports) */}
-      <ScreenSwitcherToolbar
-        currentScreenId={currentScreenId}
-        onSelectScreen={setCurrentScreenId}
-        viewport={viewport}
-        onSetViewport={setViewport}
-      />
+    <div className={`app-root viewport-${showDevToolbar ? viewport : 'desktop'}`}>
+      {/* MASTER TOP TOOLBAR (Only shown when explicitly toggled by dev/reviewer) */}
+      {showDevToolbar && (
+        <ScreenSwitcherToolbar
+          currentScreenId={currentScreenId}
+          onSelectScreen={handleNavigate}
+          viewport={viewport}
+          onSetViewport={setViewport}
+        />
+      )}
 
       {/* VIEWPORT RESIZING FRAME */}
-      <div className={`viewport-frame-container ${viewport}`}>
+      <div className={`viewport-frame-container ${showDevToolbar ? viewport : 'desktop'}`}>
         <div className="viewport-inner-canvas">
           {/* Main Website Header (unless on Admin screen) */}
           {!isAdminScreen && (
             <Header
               currentScreenId={currentScreenId}
-              onNavigate={setCurrentScreenId}
+              onNavigate={handleNavigate}
               coins={liveCoins}
               level={liveLevel}
             />
@@ -315,7 +362,7 @@ const AppContent: React.FC = () => {
                     const code = incomingChallenge.roomCode;
                     dismissChallenge();
                     await joinPrivateRoom(code);
-                    setCurrentScreenId('screen-18');
+                    handleNavigate('screen-18');
                   }}
                 >
                   <span>Accept & Race</span>
@@ -337,10 +384,42 @@ const AppContent: React.FC = () => {
 
           {/* Main Website Footer (unless on Admin screen or Live Race) */}
           {!isAdminScreen && currentScreenId !== 'screen-13' && (
-            <Footer onNavigate={setCurrentScreenId} />
+            <Footer onNavigate={handleNavigate} />
           )}
         </div>
       </div>
+
+      {/* Subtle floating dev tools toggle */}
+      <button
+        onClick={() => setShowDevToolbar(prev => !prev)}
+        style={{
+          position: 'fixed',
+          bottom: 12,
+          right: 12,
+          zIndex: 9999,
+          background: showDevToolbar ? '#EA580C' : 'rgba(30, 41, 59, 0.85)',
+          color: '#FFFFFF',
+          border: '1px solid rgba(255, 255, 255, 0.25)',
+          borderRadius: 20,
+          padding: '5px 12px',
+          fontSize: '11px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          backdropFilter: 'blur(6px)',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+          opacity: 0.7,
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px'
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+        onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
+        title="Toggle Screen Switcher Dev Toolbar (Ctrl+Shift+D)"
+      >
+        <span>{showDevToolbar ? '✕' : '🛠️'}</span>
+        <span>{showDevToolbar ? 'Hide Dev Bar' : 'Screens (50+)'}</span>
+      </button>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, UserPlus, Bot, ChevronRight, Sparkles, MapPin, Play } from 'lucide-react';
+import { Users, UserPlus, Bot, ChevronRight, Sparkles, MapPin, Play, ArrowLeft } from 'lucide-react';
 import { SvgCar } from '../../components/common/SvgCar';
 import { TRACKS_DATA, TrackItem } from '../../data/carsData';
 
@@ -17,6 +17,19 @@ export const Screen10RaceModeSelect: React.FC<Screen10RaceModeSelectProps> = ({
   return (
     <div className="screen-page race-mode-screen">
       <div className="content-wrapper">
+        {/* Back Button */}
+        <div className="mb-3" style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <button 
+            type="button"
+            className="btn btn-outline btn-sm flex-center gap-1"
+            onClick={() => onNavigate('screen-01')}
+            style={{ borderRadius: '10px', fontSize: '12px', padding: '5px 12px' }}
+          >
+            <ArrowLeft size={15} />
+            <span>Back to Home</span>
+          </button>
+        </div>
+
         {/* Page Heading */}
         <div className="page-header-block text-center">
           <span className="badge badge-orange">Start Racing</span>

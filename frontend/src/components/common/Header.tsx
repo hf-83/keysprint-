@@ -29,23 +29,24 @@ export const Header: React.FC<HeaderProps> = ({
 
   const navItems = [
     { id: 'screen-01', label: 'Home' },
-    { id: 'screen-10', label: 'Play' },
-    { id: 'screen-29', label: 'Leaderboard' },
-    { id: 'screen-25', label: 'Shop' },
+    { id: 'screen-11', label: 'Race' },
+    { id: 'screen-14', label: 'Practice' },
     { id: 'screen-24', label: 'Garage' },
+    { id: 'screen-25', label: 'Shop' },
+    { id: 'screen-29', label: 'Leaderboard' },
   ];
 
   const moreItems = [
-    { id: 'screen-09', label: 'Guest Mode' },
-    { id: 'screen-14', label: 'Solo Practice' },
-    { id: 'screen-30', label: 'Friends & Social' },
+    { id: 'screen-17', label: 'Private Rooms' },
+    { id: 'screen-15', label: 'Race Against Bots (AI)' },
+    { id: 'screen-30', label: 'Friends & Challenges' },
+    { id: 'screen-32', label: 'Tournaments' },
     { id: 'screen-27', label: 'Achievements' },
-    { id: 'screen-22', label: 'Statistics & Analytics' },
-    { id: 'screen-32', label: 'Tournaments (V2)' },
+    { id: 'screen-22', label: 'Driver Statistics' },
+    { id: 'screen-10', label: 'Race Modes & Tracks' },
     { id: 'screen-02', label: 'How to Play' },
     { id: 'screen-03', label: 'About KeySprint' },
-    { id: 'screen-36', label: 'Help & FAQ' },
-    { id: 'admin-01', label: '👑 Admin Panel' }
+    { id: 'screen-36', label: 'Help & FAQ' }
   ];
 
   return (

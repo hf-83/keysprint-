@@ -6,14 +6,18 @@ import { randomBytes } from 'node:crypto';
 const SECURE_PREFIXES = ['SPRINT', 'APEX', 'TURBO', 'NITRO', 'DRIFT', 'HYPER'];
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-function generateSecureRoomCode() {
-  const prefix = SECURE_PREFIXES[Math.floor(Math.random() * SECURE_PREFIXES.length)];
-  const bytes = randomBytes(4);
-  let suffix = '';
-  for (let i = 0; i < 4; i++) {
-    suffix += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
-  }
-  return `${prefix}-${suffix}`;
+function generateSecureRoomCode(existingCodes) {
+  let code = '';
+  do {
+    const prefix = SECURE_PREFIXES[Math.floor(Math.random() * SECURE_PREFIXES.length)];
+    const bytes = randomBytes(4);
+    let suffix = '';
+    for (let i = 0; i < 4; i++) {
+      suffix += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
+    }
+    code = `${prefix}-${suffix}`;
+  } while (existingCodes && existingCodes.has(code));
+  return code;
 }
 
 const BOT_PROFILES_BY_DIFFICULTY = {
@@ -92,7 +96,7 @@ test('Room Code Security: Generates high-entropy codes matching authorized schem
 test('Room Code Collision: 1,000 sequentially generated codes exhibit zero collisions', () => {
   const seen = new Set();
   for (let i = 0; i < 1000; i++) {
-    const code = generateSecureRoomCode();
+    const code = generateSecureRoomCode(seen);
     assert.ok(!seen.has(code), `Code ${code} collided after ${i} generations`);
     seen.add(code);
   }

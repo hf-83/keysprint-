@@ -179,10 +179,10 @@ export const Screen16RaceResults: React.FC<Screen16RaceResultsProps> = ({
 
             <button 
               className="btn btn-secondary btn-lg"
-              onClick={() => onNavigate('screen-10')}
+              onClick={() => onNavigate('screen-01')}
             >
               <ArrowLeft size={18} />
-              <span>Back to Modes</span>
+              <span>Back to Home</span>
             </button>
 
             <button 
