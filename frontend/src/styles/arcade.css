@@ -1,0 +1,1406 @@
+/* ==========================================================================
+   KeySprint — Original Flagship Arcade Racing Stage
+   3 Distinct Scenic Worlds: Sunset Grand Prix (Default) | Neon Night | Alpine
+   ========================================================================== */
+
+:root {
+  --font-display: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Default Theme: Sunset Grand Prix */
+  --world-sky: linear-gradient(180deg, #161032 0%, #3a194d 28%, #8f2d4c 52%, #e06d3b 70%, #f6b352 84%);
+  --world-sun: radial-gradient(circle, #fff3b0 0%, #f59e0b 45%, rgba(245, 158, 11, 0) 72%);
+  --world-mountain-far: #2c163d;
+  --world-mountain-near: #1f112e;
+  --world-stands: linear-gradient(180deg, #2b1d38 0%, #1c1427 100%);
+  --world-curb-a: #f59e0b;
+  --world-curb-b: #1e293b;
+  --world-road: linear-gradient(180deg, #272536 0%, #1e1d2b 55%, #161521 100%);
+
+  --header-text: #f8fafc;
+  --header-muted: #cbd5e1;
+  --nav-bg: rgba(15, 23, 42, 0.55);
+  --nav-active-bg: linear-gradient(135deg, #f97316, #ea580c);
+  --stage-border: rgba(255, 255, 255, 0.85);
+  --stage-glow: 0 22px 60px rgba(0, 0, 0, 0.58), 0 0 0 1px rgba(255, 255, 255, 0.14);
+
+  --inner-sky: radial-gradient(ellipse 75% 75% at 50% 85%, rgba(249, 115, 22, 0.38), transparent 70%),
+    linear-gradient(180deg, #120d26 0%, #2b1540 55%, #662445 100%);
+  --inner-trees-a: #1f4d3b;
+  --inner-trees-b: #163b2d;
+  --inner-curb-a: #f97316;
+  --inner-curb-b: #f8fafc;
+  --inner-road: linear-gradient(180deg, #2c2d3a 0%, #343645 50%, #262834 100%);
+}
+
+[data-world='neon'] {
+  --world-sky: linear-gradient(180deg, #050816 0%, #0d1538 38%, #1a1045 64%, #2d1259 84%);
+  --world-sun: radial-gradient(circle, #22d3ee 0%, #a855f7 48%, rgba(168, 85, 247, 0) 72%);
+  --world-mountain-far: #11193d;
+  --world-mountain-near: #0a0f26;
+  --world-stands: linear-gradient(180deg, #121730 0%, #0a0d1f 100%);
+  --world-curb-a: #06b6d4;
+  --world-curb-b: #ec4899;
+  --world-road: linear-gradient(180deg, #151829 0%, #101322 55%, #0a0c17 100%);
+
+  --nav-active-bg: linear-gradient(135deg, #06b6d4, #3b82f6);
+  --stage-border: rgba(34, 211, 238, 0.78);
+  --stage-glow: 0 22px 60px rgba(0, 0, 0, 0.65), 0 0 36px rgba(6, 182, 212, 0.28);
+
+  --inner-sky: radial-gradient(ellipse 70% 80% at 50% 85%, rgba(6, 182, 212, 0.28), transparent 72%),
+    linear-gradient(180deg, #060919 0%, #0f173b 60%, #1e1348 100%);
+  --inner-trees-a: #0f3d4c;
+  --inner-trees-b: #0b2d3b;
+  --inner-curb-a: #06b6d4;
+  --inner-curb-b: #e879f9;
+  --inner-road: linear-gradient(180deg, #1c2033 0%, #232840 50%, #181b2b 100%);
+}
+
+[data-world='alpine'] {
+  --world-sky: linear-gradient(180deg, #0c4a6e 0%, #0284c7 35%, #38bdf8 62%, #bae6fd 84%);
+  --world-sun: radial-gradient(circle, #fef9c3 0%, #fde047 45%, rgba(253, 224, 71, 0) 72%);
+  --world-mountain-far: #336685;
+  --world-mountain-near: #1e4d5c;
+  --world-stands: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  --world-curb-a: #10b981;
+  --world-curb-b: #ffffff;
+  --world-road: linear-gradient(180deg, #334155 0%, #283344 55%, #1e293b 100%);
+
+  --nav-active-bg: linear-gradient(135deg, #10b981, #059669);
+  --stage-border: #ffffff;
+  --stage-glow: 0 22px 54px rgba(12, 74, 110, 0.42);
+
+  --inner-sky: radial-gradient(ellipse 70% 70% at 50% 25%, rgba(56, 189, 248, 0.25), transparent 70%),
+    linear-gradient(180deg, #0f2942 0%, #174363 60%, #1d5773 100%);
+  --inner-trees-a: #15803d;
+  --inner-trees-b: #166534;
+  --inner-curb-a: #10b981;
+  --inner-curb-b: #ffffff;
+  --inner-road: linear-gradient(180deg, #353f4b 0%, #3d4856 50%, #2e3742 100%);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  color: #f8fafc;
+  background: #161032;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   FULL-SCREEN ORIGINAL SCENIC RACETRACK BACKDROP
+   ========================================================================== */
+
+.ar-world {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.ar-bg-scenery {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ar-bg-sky {
+  position: absolute;
+  inset: 0 0 34vh 0;
+  background: var(--world-sky);
+  transition: background 0.4s ease;
+}
+
+/* Glowing Horizon Sun / Moon */
+.ar-bg-sun {
+  position: absolute;
+  bottom: 33vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: var(--world-sun);
+  opacity: 0.78;
+  filter: blur(2px);
+}
+
+/* Mountains + City + Floodlights SVG Layer */
+.ar-bg-horizon-svg {
+  position: absolute;
+  bottom: 35vh;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 210px;
+}
+
+/* Stadium Barrier */
+.ar-bg-stands {
+  position: absolute;
+  bottom: 27vh;
+  left: 0;
+  right: 0;
+  height: 9vh;
+  background: var(--world-stands);
+  border-top: 2px solid rgba(255, 255, 255, 0.14);
+}
+
+/* Outer Racing Curb */
+.ar-bg-curb {
+  position: absolute;
+  bottom: 24.5vh;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--world-curb-a) 0px,
+    var(--world-curb-a) 32px,
+    var(--world-curb-b) 32px,
+    var(--world-curb-b) 64px
+  );
+  border-top: 2px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.35);
+}
+
+/* Outer Asphalt Road */
+.ar-bg-road {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 24.5vh;
+  background: var(--world-road);
+}
+
+.ar-bg-road-dashes {
+  position: absolute;
+  top: 48%;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.55) 0px,
+    rgba(255, 255, 255, 0.55) 48px,
+    transparent 48px,
+    transparent 110px
+  );
+}
+
+.ar-bg-finish-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 64%;
+  width: 64px;
+  transform: skewX(24deg);
+  background-image: repeating-conic-gradient(#0f172a 0% 25%, rgba(248, 250, 252, 0.85) 0% 50%);
+  background-size: 20px 20px;
+  opacity: 0.6;
+}
+
+/* ==========================================================================
+   SLEEK GLASS TOP HEADER & NAVIGATION
+   ========================================================================== */
+
+.ar-header {
+  position: relative;
+  z-index: 20;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 12px 18px 8px;
+}
+
+.ar-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ar-logo {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 32px;
+  letter-spacing: -1px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+}
+
+.ar-logo-key {
+  color: #ffffff;
+}
+
+.ar-logo-sprint {
+  background: linear-gradient(135deg, #fbbf24 0%, #f97316 55%, #ef4444 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ar-logo-arrows {
+  color: #22d3ee;
+  margin-left: 3px;
+  font-size: 28px;
+}
+
+.ar-gift-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  background: rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  text-align: left;
+}
+
+.ar-gift-btn:hover {
+  background: rgba(15, 23, 42, 0.85);
+  transform: translateY(-1px);
+}
+
+.ar-gift-btn.claimed {
+  opacity: 0.7;
+  cursor: default;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.ar-gift-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #f8fafc;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ar-gift-text span {
+  color: #fbbf24;
+}
+
+.ar-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ar-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(15, 23, 42, 0.68);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ar-user-pill:hover {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.ar-coin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  color: #fde68a;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ar-auth-link {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 12px;
+  transition: background 0.15s ease;
+}
+
+.ar-auth-link:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* Second Row: Clean Horizontal Game Nav Pill */
+.ar-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.ar-nav-pill-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--nav-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ar-nav-item {
+  background: transparent;
+  border: none;
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.ar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.ar-nav-item.active {
+  background: var(--nav-active-bg);
+  color: #ffffff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* ==========================================================================
+   CENTER FRAMED GAME STAGE
+   ========================================================================== */
+
+.ar-stage-outer {
+  position: relative;
+  z-index: 15;
+  flex: 1;
+  width: 100%;
+  max-width: 930px;
+  margin: 6px auto 22px;
+  padding: 0 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ar-stage-frame {
+  position: relative;
+  width: 100%;
+  min-height: 505px;
+  background: #171a24;
+  border: 4px solid var(--stage-border);
+  border-radius: 14px;
+  box-shadow: var(--stage-glow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   LIVE ARCADE TRACK INSIDE THE STAGE
+   ========================================================================== */
+
+.ar-track-scene {
+  position: relative;
+  flex: 1;
+  min-height: 497px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  background: #1a1d28;
+}
+
+.ar-stage-sky {
+  position: relative;
+  height: 188px;
+  background: var(--inner-sky);
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: background 0.35s ease;
+}
+
+.ar-stage-skyline {
+  position: absolute;
+  bottom: 36px;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background:
+    linear-gradient(90deg, transparent 10px, rgba(10, 12, 24, 0.72) 10px, rgba(10, 12, 24, 0.72) 48px, transparent 48px, transparent 62px, rgba(10, 12, 24, 0.85) 62px, rgba(10, 12, 24, 0.85) 95px, transparent 95px, transparent 118px, rgba(10, 12, 24, 0.65) 118px, rgba(10, 12, 24, 0.65) 172px, transparent 172px);
+  background-size: 210px 70px;
+  background-repeat: repeat-x;
+}
+
+.ar-stage-trees {
+  position: absolute;
+  bottom: 22px;
+  left: 0;
+  right: 0;
+  height: 36px;
+  background:
+    radial-gradient(circle 18px at 18px 26px, var(--inner-trees-a) 98%, transparent 100%),
+    radial-gradient(circle 22px at 48px 24px, var(--inner-trees-b) 98%, transparent 100%),
+    radial-gradient(circle 16px at 82px 27px, var(--inner-trees-a) 98%, transparent 100%),
+    radial-gradient(circle 20px at 116px 24px, var(--inner-trees-b) 98%, transparent 100%),
+    radial-gradient(circle 18px at 146px 26px, var(--inner-trees-a) 98%, transparent 100%);
+  background-size: 164px 36px;
+  background-repeat: repeat-x;
+}
+
+.ar-stage-fence {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(226, 232, 240, 0.7) 0px,
+      rgba(226, 232, 240, 0.7) 7px,
+      transparent 7px,
+      transparent 66px
+    ),
+    linear-gradient(180deg, #94a3b8 0%, #64748b 34%, #cbd5e1 34%, #94a3b8 100%);
+  border-top: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.ar-stage-curb {
+  height: 15px;
+  flex-shrink: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--inner-curb-a) 0px,
+    var(--inner-curb-a) 24px,
+    var(--inner-curb-b) 24px,
+    var(--inner-curb-b) 48px
+  );
+  border-top: 1px solid rgba(0, 0, 0, 0.35);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.45);
+}
+
+.ar-stage-road {
+  position: relative;
+  flex: 1;
+  min-height: 294px;
+  background: var(--inner-road);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 10px 0 12px;
+}
+
+/* Nitro Speed Lines Overlay */
+.ar-speed-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 90px,
+    rgba(34, 211, 238, 0.14) 90px,
+    rgba(34, 211, 238, 0.14) 150px
+  );
+  background-size: 240px 100%;
+  animation: ar-nitro-streak 0.25s linear infinite;
+}
+
+@keyframes ar-nitro-streak {
+  from { background-position-x: 0; }
+  to { background-position-x: -240px; }
+}
+
+.ar-track-scene.is-racing .ar-stage-trees {
+  animation: ar-scroll-trees 2.4s linear infinite;
+}
+
+.ar-track-scene.is-racing .ar-stage-fence {
+  animation: ar-scroll-fence 1s linear infinite;
+}
+
+.ar-track-scene.is-racing .ar-stage-curb {
+  animation: ar-scroll-curb 0.38s linear infinite;
+}
+
+@keyframes ar-scroll-trees {
+  from { background-position-x: 0; }
+  to { background-position-x: -164px; }
+}
+
+@keyframes ar-scroll-fence {
+  from { background-position-x: 0; }
+  to { background-position-x: -66px; }
+}
+
+@keyframes ar-scroll-curb {
+  from { background-position-x: 0; }
+  to { background-position-x: -48px; }
+}
+
+/* Top-Right Stage Pills */
+.ar-stage-top-toggles {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ar-gloss-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px 4px 5px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.38);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.38);
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+
+.ar-gloss-toggle:hover {
+  transform: scale(1.03);
+  filter: brightness(1.08);
+}
+
+.ar-gloss-toggle.orange {
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+}
+
+.ar-gloss-toggle.purple {
+  background: linear-gradient(180deg, #6366f1 0%, #4338ca 100%);
+}
+
+.ar-gloss-toggle.cyan {
+  background: linear-gradient(180deg, #06b6d4 0%, #0e7490 100%);
+}
+
+.ar-gloss-toggle-icon {
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 11px;
+}
+
+/* Top-Left Pace Selector on Hub */
+.ar-hub-pace-bar {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 25;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+}
+
+.ar-pace-btn {
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ar-pace-btn.active {
+  background: #f97316;
+  color: #ffffff;
+}
+
+/* Hub Title Inside Sky */
+.ar-stage-hub-title {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.ar-stage-logo-big {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 46px;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.65));
+}
+
+.ar-stage-status-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fde68a;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+}
+
+/* Parked Hero Car with Inline Model Switcher */
+.ar-hub-car-spot {
+  position: relative;
+  z-index: 10;
+  padding: 4px 20px 6px 26px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ar-car-arrow-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  background: rgba(15, 23, 42, 0.65);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.ar-car-arrow-btn:hover {
+  background: #f97316;
+  transform: scale(1.1);
+}
+
+.ar-car-name-tag {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #e2e8f0;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.ar-hub-car-bounce {
+  animation: ar-idle-bounce 1.4s ease-in-out infinite;
+}
+
+@keyframes ar-idle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+
+/* Live Race Lanes */
+.ar-road-lane {
+  position: relative;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.22);
+}
+
+.ar-road-lane:last-child {
+  border-bottom: none;
+}
+
+.ar-road-lane.is-you {
+  background: rgba(249, 115, 22, 0.11);
+}
+
+.ar-lane-finish {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 36px;
+  width: 14px;
+  background-image: repeating-conic-gradient(#111827 0% 25%, #f8fafc 0% 50%);
+  background-size: 7px 7px;
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.ar-lane-racer-tag {
+  position: absolute;
+  left: 12px;
+  top: 4px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ar-road-lane.is-you .ar-lane-racer-tag {
+  background: linear-gradient(90deg, #f97316, #dc2626);
+  color: #ffffff;
+}
+
+.ar-lane-car-wrap {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: left 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 6;
+}
+
+/* ==========================================================================
+   HUB BOTTOM ACTION DECK
+   ========================================================================== */
+
+.ar-hub-deck {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 18px 16px;
+  flex-wrap: wrap;
+}
+
+.ar-hub-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ar-hub-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ar-pill-action {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 7px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.42);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.42);
+  transition: transform 0.15s ease, filter 0.15s ease;
+  text-align: left;
+  line-height: 1.1;
+}
+
+.ar-pill-action:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.ar-pill-action.teal {
+  background: linear-gradient(180deg, #14b8a6 0%, #0f766e 100%);
+}
+
+.ar-pill-action.sky {
+  background: linear-gradient(180deg, #0ea5e9 0%, #0369a1 100%);
+}
+
+.ar-pill-action.purple {
+  background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);
+}
+
+.ar-pill-action.blue {
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  padding: 5px 14px 5px 6px;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ar-pill-icon-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ar-pill-action.blue .ar-pill-icon-circle {
+  width: 24px;
+  height: 24px;
+}
+
+.ar-notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* BIG ROUND START RACE HERO BUTTON */
+.ar-start-circle-btn {
+  width: 114px;
+  height: 114px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.5);
+  background: radial-gradient(circle at 35% 28%, #fb923c 0%, #ea580c 42%, #dc2626 80%, #991b1b 100%);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.55),
+    inset 0 3px 8px rgba(255, 255, 255, 0.35);
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), filter 0.16s ease;
+  animation: ar-pulse-ring 2.2s infinite;
+}
+
+.ar-start-circle-btn:hover {
+  transform: scale(1.08);
+  filter: brightness(1.08);
+}
+
+.ar-start-circle-btn:active {
+  transform: scale(0.97);
+}
+
+@keyframes ar-pulse-ring {
+  0% { box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55), inset 0 3px 8px rgba(255, 255, 255, 0.35), 0 0 0 0 rgba(249, 115, 22, 0.6); }
+  70% { box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55), inset 0 3px 8px rgba(255, 255, 255, 0.35), 0 0 0 15px rgba(249, 115, 22, 0); }
+  100% { box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55), inset 0 3px 8px rgba(255, 255, 255, 0.35), 0 0 0 0 rgba(249, 115, 22, 0); }
+}
+
+/* Inline Paint Popover */
+.ar-customizer-tray {
+  position: absolute;
+  top: 52px;
+  left: 14px;
+  z-index: 28;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #ffffff;
+  max-width: 340px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
+}
+
+.ar-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ar-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.ar-swatch:hover {
+  transform: scale(1.14);
+}
+
+.ar-swatch.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px #f97316;
+  transform: scale(1.14);
+}
+
+/* ==========================================================================
+   LIVE RACE TYPING HUD & BOX
+   ========================================================================== */
+
+.ar-race-hud-top {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 6px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ar-hud-pills {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.ar-hud-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ar-hud-chip.wpm { color: #38bdf8; }
+.ar-hud-chip.acc { color: #4ade80; }
+.ar-hud-chip.nitro {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  border-color: #fde68a;
+  color: #ffffff;
+}
+.ar-hud-chip.err {
+  background: rgba(220, 38, 38, 0.92);
+  color: #ffffff;
+}
+
+.ar-exit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ar-exit-btn:hover {
+  background: #dc2626;
+  border-color: #ffffff;
+}
+
+.ar-typing-box {
+  position: relative;
+  z-index: 20;
+  margin: 4px 16px 10px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: rgba(11, 15, 28, 0.92);
+  border: 2px solid rgba(249, 115, 22, 0.65);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+  cursor: text;
+  overflow: hidden;
+}
+
+.ar-typing-box.has-error {
+  border-color: #f43f5e;
+  animation: ar-shake 0.18s linear;
+}
+
+@keyframes ar-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.ar-typing-scroll-track {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  height: 36px;
+}
+
+.ar-scroll-done {
+  color: #64748b;
+  flex-shrink: 0;
+  max-width: 34%;
+  overflow: hidden;
+  direction: rtl;
+  white-space: pre;
+}
+
+.ar-scroll-done-inner {
+  direction: ltr;
+  unicode-bidi: bidi-override;
+}
+
+.ar-typing-multiline {
+  font-family: var(--font-mono);
+  font-size: 17.5px;
+  line-height: 1.65;
+  color: #e2e8f0;
+  user-select: none;
+  max-height: 92px;
+  overflow-y: auto;
+}
+
+.ar-char-ok { color: #4ade80; }
+.ar-char-err { background: #ef4444; color: #ffffff; border-radius: 3px; padding: 0 1px; }
+.ar-char-cur { background: #fbbf24; color: #0f172a; font-weight: 800; border-radius: 3px; padding: 0 2px; }
+.ar-char-next { color: #f8fafc; }
+
+.ar-hidden-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: text;
+  font-size: 16px;
+}
+
+/* Countdown & Results Overlays */
+.ar-countdown-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: rgba(11, 15, 28, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #ffffff;
+}
+
+.ar-traffic-box {
+  display: flex;
+  gap: 12px;
+  padding: 12px 20px;
+  border-radius: 16px;
+  background: #0f172a;
+  border: 3px solid #475569;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+}
+
+.ar-bulb {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #1f2937;
+  border: 2px solid #374151;
+}
+
+.ar-bulb.red { background: #ef4444; box-shadow: 0 0 22px #ef4444; }
+.ar-bulb.green { background: #22c55e; box-shadow: 0 0 24px #22c55e; }
+
+.ar-countdown-label {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.ar-results-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  background: rgba(11, 15, 28, 0.92);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: #ffffff;
+  text-align: center;
+  gap: 16px;
+}
+
+.ar-pb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f59e0b, #ea580c);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.ar-results-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.ar-res-box {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 14px 10px;
+}
+
+.ar-res-val {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.ar-res-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   SECONDARY PANELS INSIDE THE STAGE
+   ========================================================================== */
+
+.ar-panel-view {
+  flex: 1;
+  background: #f8fafc;
+  color: #0f172a;
+  padding: 22px 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 497px;
+}
+
+.ar-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 12px;
+}
+
+.ar-panel-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.ar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+
+.ar-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06); }
+.ar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ar-btn-red { background: linear-gradient(180deg, #f97316 0%, #dc2626 100%); color: #ffffff; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35); }
+.ar-btn-teal { background: linear-gradient(180deg, #14b8a6 0%, #0f766e 100%); color: #ffffff; }
+.ar-btn-navy { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: #ffffff; }
+.ar-btn-light { background: #e2e8f0; color: #1e293b; }
+
+.ar-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 14px;
+}
+
+.ar-car-card {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.ar-car-card.equipped { border-color: #f97316; background: #fff7ed; }
+
+.ar-stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.ar-stat-tile {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+}
+
+.ar-stat-tile strong { display: block; font-family: var(--font-mono); font-size: 24px; color: #0f172a; }
+.ar-stat-tile span { font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+
+.ar-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid #e2e8f0;
+  font-size: 13.5px;
+}
+
+.ar-table th {
+  background: #e2e8f0;
+  color: #334155;
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ar-table td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+.ar-table tr.me td { background: #fff7ed; font-weight: 700; }
+
+.ar-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  outline: none;
+}
+
+.ar-input:focus { border-color: #f97316; }
+
+/* Slim Dark-Glass Footer */
+.ar-footer {
+  position: relative;
+  z-index: 20;
+  background: rgba(11, 15, 28, 0.78);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 9px 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  .ar-logo { font-size: 25px; }
+  .ar-stage-logo-big { font-size: 32px; }
+  .ar-hub-deck { justify-content: center; }
+  .ar-results-grid, .ar-stat-row { grid-template-columns: repeat(2, 1fr); }
+  .ar-stage-top-toggles { top: 8px; right: 8px; }
+}

@@ -12,6 +12,8 @@ export type CarModelId =
   | 'retro' 
   | 'jeep';
 
+export type WheelStyleId = 'silver' | 'gold' | 'cyan' | 'red' | 'stealth';
+
 interface SvgCarProps {
   id: CarModelId;
   size?: number | string;
@@ -20,6 +22,8 @@ interface SvgCarProps {
   viewAngle?: 'side' | 'isometric' | 'top';
   className?: string;
   animatedNitro?: boolean;
+  paintOverride?: { primary: string; secondary: string; dark: string } | null;
+  wheelStyle?: WheelStyleId;
 }
 
 export const SvgCar: React.FC<SvgCarProps> = ({
@@ -29,8 +33,11 @@ export const SvgCar: React.FC<SvgCarProps> = ({
   height,
   viewAngle = 'side',
   className = '',
-  animatedNitro = false
+  animatedNitro = false,
+  paintOverride = null,
+  wheelStyle = 'silver'
 }) => {
+  const uid = React.useId().replace(/:/g, '');
   const w = width || (typeof size === 'number' ? size : 140);
   const h = height || (typeof size === 'number' ? size * 0.58 : 80);
 
@@ -136,7 +143,19 @@ export const SvgCar: React.FC<SvgCarProps> = ({
     }
   };
 
-  const p = palettes[id] || palettes.starter;
+  const baseP = palettes[id] || palettes.starter;
+  const p = paintOverride
+    ? { ...baseP, primary: paintOverride.primary, secondary: paintOverride.secondary, dark: paintOverride.dark }
+    : baseP;
+
+  const rimColors: Record<WheelStyleId, [string, string, string]> = {
+    silver: ['#E2E8F0', '#94A3B8', '#64748B'],
+    gold: ['#FEF08A', '#EAB308', '#A16207'],
+    cyan: ['#A5F3FC', '#06B6D4', '#0E7490'],
+    red: ['#FCA5A5', '#EF4444', '#991B1B'],
+    stealth: ['#475569', '#1E293B', '#0F172A'],
+  };
+  const [rimLight, rimDark, spokeColor] = rimColors[wheelStyle] || rimColors.silver;
 
   return (
     <svg 
@@ -146,34 +165,34 @@ export const SvgCar: React.FC<SvgCarProps> = ({
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
       className={`svg-car ${className}`}
-      style={{ overflow: 'visible', filter: `drop-shadow(0 6px 12px rgba(0,0,0,0.15))` }}
+      style={{ overflow: 'visible', filter: `drop-shadow(0 6px 12px rgba(0,0,0,0.28))` }}
     >
       <defs>
         {/* Gradients */}
-        <linearGradient id={`grad-body-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={`grad-body-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor={p.secondary} />
           <stop offset="60%" stopColor={p.primary} />
           <stop offset="100%" stopColor={p.dark} />
         </linearGradient>
 
-        <linearGradient id={`grad-windshield-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={`grad-windshield-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor={p.windshield} />
           <stop offset="100%" stopColor="#0B132B" />
         </linearGradient>
 
-        <linearGradient id="wheel-rim" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#E2E8F0" />
-          <stop offset="100%" stopColor="#94A3B8" />
+        <linearGradient id={`wheel-rim-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={rimLight} />
+          <stop offset="100%" stopColor={rimDark} />
         </linearGradient>
 
         {/* Shadow */}
-        <filter id="car-shadow" x="-10%" y="80%" width="120%" height="40%">
+        <filter id={`car-shadow-${uid}`} x="-10%" y="80%" width="120%" height="40%">
           <feGaussianBlur stdDeviation="5" />
         </filter>
       </defs>
 
       {/* Ground Shadow */}
-      <ellipse cx="110" cy="106" rx="85" ry="10" fill="rgba(0, 0, 0, 0.22)" filter="url(#car-shadow)" />
+      <ellipse cx="110" cy="106" rx="85" ry="10" fill="rgba(0, 0, 0, 0.28)" filter={`url(#car-shadow-${uid})`} />
 
       {/* Nitro Flame if animated */}
       {animatedNitro && (
@@ -210,7 +229,7 @@ export const SvgCar: React.FC<SvgCarProps> = ({
            C 115 96, 95 96, 75 96 
            C 70 82, 50 82, 42 96 
            C 30 96, 24 90, 24 82 Z" 
-        fill={`url(#grad-body-${id})`} 
+        fill={`url(#grad-body-${uid})`} 
         stroke={p.dark} 
         strokeWidth="2.5" 
       />
@@ -221,7 +240,7 @@ export const SvgCar: React.FC<SvgCarProps> = ({
            C 82 42, 94 38, 122 38 
            C 138 38, 150 44, 155 52 
            C 142 54, 88 54, 72 52 Z" 
-        fill={`url(#grad-windshield-${id})`} 
+        fill={`url(#grad-windshield-${uid})`} 
         stroke="#475569" 
         strokeWidth="1.5"
       />
@@ -235,7 +254,7 @@ export const SvgCar: React.FC<SvgCarProps> = ({
       {/* Side Windows */}
       <path 
         d="M 124 40 C 136 40, 146 44, 150 50 C 135 52, 125 52, 124 40 Z" 
-        fill={`url(#grad-windshield-${id})`} 
+        fill={`url(#grad-windshield-${uid})`} 
         opacity="0.9"
       />
 
@@ -261,23 +280,23 @@ export const SvgCar: React.FC<SvgCarProps> = ({
       {/* Front Wheel (Right) */}
       <g transform="translate(156, 92)">
         <circle cx="0" cy="0" r="18" fill="#1E293B" stroke="#0F172A" strokeWidth="2" />
-        <circle cx="0" cy="0" r="11" fill="url(#wheel-rim)" />
+        <circle cx="0" cy="0" r="11" fill={`url(#wheel-rim-${uid})`} />
         <circle cx="0" cy="0" r="6" fill="#334155" />
         <circle cx="0" cy="0" r="2.5" fill="#FFFFFF" />
         {/* Spokes */}
-        <line x1="-9" y1="0" x2="9" y2="0" stroke="#64748B" strokeWidth="2" />
-        <line x1="0" y1="-9" x2="0" y2="9" stroke="#64748B" strokeWidth="2" />
+        <line x1="-9" y1="0" x2="9" y2="0" stroke={spokeColor} strokeWidth="2" />
+        <line x1="0" y1="-9" x2="0" y2="9" stroke={spokeColor} strokeWidth="2" />
       </g>
 
       {/* Rear Wheel (Left) */}
       <g transform="translate(56, 92)">
         <circle cx="0" cy="0" r="18" fill="#1E293B" stroke="#0F172A" strokeWidth="2" />
-        <circle cx="0" cy="0" r="11" fill="url(#wheel-rim)" />
+        <circle cx="0" cy="0" r="11" fill={`url(#wheel-rim-${uid})`} />
         <circle cx="0" cy="0" r="6" fill="#334155" />
         <circle cx="0" cy="0" r="2.5" fill="#FFFFFF" />
         {/* Spokes */}
-        <line x1="-9" y1="0" x2="9" y2="0" stroke="#64748B" strokeWidth="2" />
-        <line x1="0" y1="-9" x2="0" y2="9" stroke="#64748B" strokeWidth="2" />
+        <line x1="-9" y1="0" x2="9" y2="0" stroke={spokeColor} strokeWidth="2" />
+        <line x1="0" y1="-9" x2="0" y2="9" stroke={spokeColor} strokeWidth="2" />
       </g>
 
       {/* Car Number Badge (optional) */}

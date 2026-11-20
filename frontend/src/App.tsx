@@ -1,425 +1,257 @@
 import * as React from 'react';
-import { useState } from 'react';
-import { ScreenSwitcherToolbar, ViewportMode, SCREEN_INVENTORY } from './components/layout/ScreenSwitcherToolbar';
-import { Header } from './components/common/Header';
-import { Footer } from './components/common/Footer';
-import { CarModelId } from './components/common/SvgCar';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { AuthProvider } from './context/AuthContext';
 import { RaceProvider, useRace } from './context/RaceContext';
+import { ArcadeHeader, ArcadeTab } from './components/arcade/ArcadeHeader';
+import {
+  ArcadePlayStage,
+  ARCADE_PAINTS,
+  PaintSwatch,
+  WorldTheme,
+} from './components/arcade/ArcadePlayStage';
+import {
+  StatsPanel,
+  GaragePanel,
+  LeaderboardPanel,
+  FriendsPanel,
+  AccountPanel,
+} from './components/arcade/ArcadeSubPanels';
+import { WheelStyleId } from './components/common/SvgCar';
 
-// PUBLIC SCREENS
-import { Screen01Homepage } from './screens/public/Screen01Homepage';
-import { Screen02HowToPlay } from './screens/public/Screen02HowToPlay';
-import { Screen03About } from './screens/public/Screen03About';
+const VALID_TABS: ArcadeTab[] = ['play', 'stats', 'garage', 'leaderboard', 'friends', 'account'];
+const WHEEL_ORDER: WheelStyleId[] = ['silver', 'gold', 'cyan', 'red', 'stealth'];
+const WORLD_ORDER: WorldTheme[] = ['sunset', 'neon', 'alpine'];
 
-// AUTH SCREENS
-import { Screen04SignUp } from './screens/auth/Screen04SignUp';
-import { Screen05Login } from './screens/auth/Screen05Login';
-import { Screen06ForgotPassword } from './screens/auth/Screen06ForgotPassword';
-import { Screen07ResetPassword } from './screens/auth/Screen07ResetPassword';
-import { Screen08EmailVerification } from './screens/auth/Screen08EmailVerification';
-import { Screen09GuestEntry } from './screens/auth/Screen09GuestEntry';
-
-// GAMEPLAY SCREENS
-import { Screen10RaceModeSelect } from './screens/gameplay/Screen10RaceModeSelect';
-import { Screen11MatchmakingQueue } from './screens/gameplay/Screen11MatchmakingQueue';
-import { Screen12PreRaceLobby } from './screens/gameplay/Screen12PreRaceLobby';
-import { Screen13LiveRace } from './screens/gameplay/Screen13LiveRace';
-import { Screen14Practice } from './screens/gameplay/Screen14Practice';
-import { Screen15BotRace } from './screens/gameplay/Screen15BotRace';
-import { Screen16RaceResults } from './screens/gameplay/Screen16RaceResults';
-import { Screen17CreateRoom } from './screens/gameplay/Screen17CreateRoom';
-import { Screen18RoomLobby } from './screens/gameplay/Screen18RoomLobby';
-
-// ACCOUNT SCREENS
-import { Screen19Dashboard } from './screens/account/Screen19Dashboard';
-import { Screen20Profile } from './screens/account/Screen20Profile';
-import { Screen21EditProfile } from './screens/account/Screen21EditProfile';
-import { Screen22Statistics } from './screens/account/Screen22Statistics';
-import { Screen23RaceHistory } from './screens/account/Screen23RaceHistory';
-
-// GARAGE & SHOP
-import { Screen24Garage } from './screens/garage_shop/Screen24Garage';
-import { Screen25Shop } from './screens/garage_shop/Screen25Shop';
-import { Screen26PurchaseModal } from './screens/garage_shop/Screen26PurchaseModal';
-import { Screen27Achievements } from './screens/garage_shop/Screen27Achievements';
-import { Screen28DailyChallenges } from './screens/garage_shop/Screen28DailyChallenges';
-
-// SOCIAL & TOURNAMENTS
-import { Screen29Leaderboard } from './screens/social/Screen29Leaderboard';
-import { Screen30Friends } from './screens/social/Screen30Friends';
-import { Screen31Notifications } from './screens/social/Screen31Notifications';
-import { Screen32Tournaments } from './screens/social/Screen32Tournaments';
-
-// PRACTICE & LEARNING
-import { Screen33PracticeModes } from './screens/learning/Screen33PracticeModes';
-import { Screen34PracticeResults } from './screens/learning/Screen34PracticeResults';
-
-// SETTINGS & SUPPORT
-import { Screen35Settings } from './screens/settings/Screen35Settings';
-import { Screen36HelpFAQ } from './screens/settings/Screen36HelpFAQ';
-import { Screen37ContactReport } from './screens/settings/Screen37ContactReport';
-import { Screen38Legal } from './screens/settings/Screen38Legal';
-import { Screen39SystemStates } from './screens/settings/Screen39SystemStates';
-
-// ADMIN PANEL
-import { AdminLayout } from './screens/admin/AdminLayout';
-import { Admin01Overview } from './screens/admin/Admin01Overview';
-import { Admin02UserManagement } from './screens/admin/Admin02UserManagement';
-import { Admin03PassageCMS } from './screens/admin/Admin03PassageCMS';
-import { Admin04GameConfig } from './screens/admin/Admin04GameConfig';
-import { Admin05GarageShopConfig } from './screens/admin/Admin05GarageShopConfig';
-import { Admin06RewardsXPConfig } from './screens/admin/Admin06RewardsXPConfig';
-import { Admin07AntiCheat } from './screens/admin/Admin07AntiCheat';
-import { Admin08Analytics } from './screens/admin/Admin08Analytics';
-import { Admin09StaffAudit } from './screens/admin/Admin09StaffAudit';
-
-// RESPONSIVE & OVERVIEW
-import { ScreenResponsiveViews } from './screens/responsive/ScreenResponsiveViews';
-import { ScreenOverviewBoard } from './screens/overview/ScreenOverviewBoard';
+const readHashTab = (): ArcadeTab => {
+  if (typeof window === 'undefined') return 'play';
+  const raw = window.location.hash.replace('#', '').toLowerCase() as ArcadeTab;
+  return VALID_TABS.includes(raw) ? raw : 'play';
+};
 
 const AppContent: React.FC = () => {
-  const { user, updateCoins, equipCar, purchaseCar } = useAuth();
-  const { incomingChallenge, dismissChallenge, joinPrivateRoom } = useRace();
-  const [currentScreenId, setCurrentScreenId] = useState<string>(() => {
-    if (typeof window !== 'undefined' && window.location.hash) {
-      return window.location.hash.replace('#', '') || 'screen-01';
+  const { joinPrivateRoom } = useRace();
+
+  const [activeTab, setActiveTab] = useState<ArcadeTab>(readHashTab);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [privateRaceActive, setPrivateRaceActive] = useState<boolean>(false);
+
+  // Persisted Scenic World Theme (Defaults to Sunset Grand Prix — completely original!)
+  const [worldTheme, setWorldTheme] = useState<WorldTheme>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('keysprint_world_theme') as WorldTheme | null;
+      if (saved && WORLD_ORDER.includes(saved)) return saved;
     }
-    return 'screen-01';
+    return 'sunset';
   });
 
-  const handleNavigate = React.useCallback((nextScreenId: string) => {
-    if (nextScreenId === currentScreenId) return;
+  // Persisted Car Paint & Wheel Rims
+  const [paint, setPaint] = useState<PaintSwatch>(() => {
     if (typeof window !== 'undefined') {
-      window.history.pushState({ screenId: nextScreenId }, '', `#${nextScreenId}`);
+      const savedId = localStorage.getItem('keysprint_car_paint');
+      const found = ARCADE_PAINTS.find((p) => p.id === savedId);
+      if (found) return found;
     }
-    setCurrentScreenId(nextScreenId);
-  }, [currentScreenId]);
-
-  React.useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
-      if (e.state && e.state.screenId) {
-        setCurrentScreenId(e.state.screenId);
-      } else if (typeof window !== 'undefined') {
-        const hash = window.location.hash.replace('#', '');
-        setCurrentScreenId(hash || 'screen-01');
-      }
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-  const [viewport, setViewport] = useState<ViewportMode>('desktop');
-  const [showDevToolbar, setShowDevToolbar] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('dev') === 'true';
-    }
-    return false;
+    return ARCADE_PAINTS[0];
   });
 
-  // Toggle Dev Toolbar hotkey (Ctrl+Shift+D or Cmd+Shift+D)
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
-        e.preventDefault();
-        setShowDevToolbar(prev => !prev);
+  const [wheelStyle, setWheelStyle] = useState<WheelStyleId>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('keysprint_wheel_style') as WheelStyleId | null;
+      if (saved && WHEEL_ORDER.includes(saved)) return saved;
+    }
+    return 'gold';
+  });
+
+  const handleCycleWorld = () => {
+    const idx = WORLD_ORDER.indexOf(worldTheme);
+    const next = WORLD_ORDER[(idx + 1) % WORLD_ORDER.length];
+    setWorldTheme(next);
+    localStorage.setItem('keysprint_world_theme', next);
+  };
+
+  const handleSelectPaint = (next: PaintSwatch) => {
+    setPaint(next);
+    localStorage.setItem('keysprint_car_paint', next.id);
+  };
+
+  const handleCycleWheels = () => {
+    const idx = WHEEL_ORDER.indexOf(wheelStyle);
+    const next = WHEEL_ORDER[(idx + 1) % WHEEL_ORDER.length];
+    setWheelStyle(next);
+    localStorage.setItem('keysprint_wheel_style', next);
+  };
+
+  const navigateTab = useCallback(
+    (next: ArcadeTab) => {
+      if (next === activeTab) return;
+      if (typeof window !== 'undefined') {
+        window.history.pushState({ tab: next }, '', `#${next}`);
+      }
+      setActiveTab(next);
+    },
+    [activeTab]
+  );
+
+  // Browser Back / Forward support
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      const next = e.state?.tab as ArcadeTab | undefined;
+      if (next && VALID_TABS.includes(next)) {
+        setActiveTab(next);
+      } else {
+        setActiveTab(readHashTab());
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  // Handle URL invite parameter ?room=CODE
-  const inviteHandledRef = React.useRef(false);
-  React.useEffect(() => {
+  // Invite URL ?room=CODE support
+  const inviteHandledRef = useRef(false);
+  useEffect(() => {
     if (inviteHandledRef.current) return;
     const params = new URLSearchParams(window.location.search);
-    const roomCodeParam = params.get('room');
-    if (roomCodeParam) {
+    const code = params.get('room');
+    if (code) {
       inviteHandledRef.current = true;
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-
-      joinPrivateRoom(roomCodeParam).then((res) => {
-        if (res.success) {
-          setCurrentScreenId('screen-18');
-        } else {
-          setCurrentScreenId('screen-17');
-        }
-      });
+      window.history.replaceState({}, document.title, `${window.location.pathname}#friends`);
+      setActiveTab('friends');
+      joinPrivateRoom(code).catch(() => {});
     }
   }, [joinPrivateRoom]);
 
-  const liveCoins = user?.stats?.coins ?? 0;
-  const liveLevel = user?.stats?.level ?? 1;
-  const equippedCarItem = user?.inventory?.find(i => i.isEquipped);
-  const liveEquippedCar: CarModelId = (equippedCarItem?.itemId as CarModelId) || 'blaze';
-
-  const isAdminScreen = currentScreenId.startsWith('admin-');
-
-  // Render Screen Content
-  const renderScreen = () => {
-    // ADMIN SCREENS (Wrapped in AdminLayout)
-    if (isAdminScreen) {
-      return (
-        <AdminLayout
-          currentAdminId={currentScreenId}
-          onNavigateAdmin={(id: string) => handleNavigate(id)}
-          onExitAdmin={() => handleNavigate('screen-01')}
-        >
-          {currentScreenId === 'admin-01' && <Admin01Overview />}
-          {currentScreenId === 'admin-02' && <Admin02UserManagement />}
-          {currentScreenId === 'admin-03' && <Admin03PassageCMS />}
-          {currentScreenId === 'admin-04' && <Admin04GameConfig />}
-          {currentScreenId === 'admin-05' && <Admin05GarageShopConfig />}
-          {currentScreenId === 'admin-06' && <Admin06RewardsXPConfig />}
-          {currentScreenId === 'admin-07' && <Admin07AntiCheat />}
-          {currentScreenId === 'admin-08' && <Admin08Analytics />}
-          {currentScreenId === 'admin-09' && <Admin09StaffAudit />}
-        </AdminLayout>
-      );
-    }
-
-    // REGULAR & SHOWCASE SCREENS
-    switch (currentScreenId) {
-      // SECTION A — PUBLIC
-      case 'screen-01':
-        return <Screen01Homepage onNavigate={handleNavigate} />;
-      case 'screen-02':
-        return <Screen02HowToPlay onNavigate={handleNavigate} />;
-      case 'screen-03':
-        return <Screen03About onNavigate={handleNavigate} />;
-
-      // SECTION B — AUTH
-      case 'screen-04':
-        return <Screen04SignUp onNavigate={handleNavigate} />;
-      case 'screen-05':
-        return <Screen05Login onNavigate={handleNavigate} />;
-      case 'screen-06':
-        return <Screen06ForgotPassword onNavigate={handleNavigate} />;
-      case 'screen-07':
-        return <Screen07ResetPassword onNavigate={handleNavigate} />;
-      case 'screen-08':
-        return <Screen08EmailVerification onNavigate={handleNavigate} />;
-      case 'screen-09':
-        return <Screen09GuestEntry onNavigate={handleNavigate} />;
-
-      // SECTION C — GAMEPLAY
-      case 'screen-10':
-        return <Screen10RaceModeSelect onNavigate={handleNavigate} />;
-      case 'screen-11':
-        return <Screen11MatchmakingQueue onNavigate={handleNavigate} />;
-      case 'screen-12':
-        return <Screen12PreRaceLobby onNavigate={handleNavigate} />;
-      case 'screen-13':
-        return <Screen13LiveRace onNavigate={handleNavigate} />;
-      case 'screen-14':
-        return <Screen14Practice onNavigate={handleNavigate} />;
-      case 'screen-15':
-        return <Screen15BotRace onNavigate={handleNavigate} />;
-      case 'screen-16':
-        return <Screen16RaceResults onNavigate={handleNavigate} />;
-      case 'screen-17':
-        return <Screen17CreateRoom onNavigate={handleNavigate} />;
-      case 'screen-18':
-        return <Screen18RoomLobby onNavigate={handleNavigate} />;
-
-      // SECTION D — ACCOUNT
-      case 'screen-19':
-        return <Screen19Dashboard onNavigate={handleNavigate} level={liveLevel} />;
-      case 'screen-20':
-        return <Screen20Profile onNavigate={handleNavigate} />;
-      case 'screen-21':
-        return <Screen21EditProfile onNavigate={handleNavigate} />;
-      case 'screen-22':
-        return <Screen22Statistics onNavigate={handleNavigate} />;
-      case 'screen-23':
-        return <Screen23RaceHistory onNavigate={handleNavigate} />;
-
-      // SECTION E — GARAGE & SHOP
-      case 'screen-24':
-        return (
-          <Screen24Garage 
-            onNavigate={handleNavigate}
-            equippedCarId={liveEquippedCar}
-          />
-        );
-      case 'screen-25':
-        return (
-          <Screen25Shop 
-            onNavigate={handleNavigate}
-            coins={liveCoins}
-          />
-        );
-      case 'screen-26':
-        return (
-          <div className="py-5 text-center">
-            <Screen26PurchaseModal
-              item={{
-                name: 'Golden Flash Hypercar',
-                price: 1800,
-                category: 'Epic',
-                carId: 'golden',
-                desc: 'Gold-plated aerodynamic composite chassis.'
-              }}
-              userCoins={liveCoins}
-              onClose={() => handleNavigate('screen-25')}
-              onConfirm={async (cost: number) => {
-                await purchaseCar('golden', cost);
-                handleNavigate('screen-24');
-              }}
-            />
-          </div>
-        );
-      case 'screen-27':
-        return <Screen27Achievements onNavigate={handleNavigate} />;
-      case 'screen-28':
-        return (
-          <Screen28DailyChallenges 
-            onNavigate={handleNavigate}
-            onClaimReward={(c: number) => updateCoins(liveCoins + c)}
-          />
-        );
-
-      // SECTION F — SOCIAL
-      case 'screen-29':
-        return <Screen29Leaderboard onNavigate={handleNavigate} />;
-      case 'screen-30':
-        return <Screen30Friends onNavigate={handleNavigate} />;
-      case 'screen-31':
-        return <Screen31Notifications onNavigate={handleNavigate} />;
-      case 'screen-32':
-        return <Screen32Tournaments onNavigate={handleNavigate} />;
-
-      // SECTION G — PRACTICE
-      case 'screen-33':
-        return <Screen33PracticeModes onNavigate={handleNavigate} />;
-      case 'screen-34':
-        return <Screen34PracticeResults onNavigate={handleNavigate} />;
-
-      // SECTION H — SETTINGS & SUPPORT
-      case 'screen-35':
-        return <Screen35Settings onNavigate={handleNavigate} />;
-      case 'screen-36':
-        return <Screen36HelpFAQ onNavigate={handleNavigate} />;
-      case 'screen-37':
-        return <Screen37ContactReport onNavigate={handleNavigate} />;
-      case 'screen-38':
-        return <Screen38Legal onNavigate={handleNavigate} />;
-      case 'screen-39':
-        return <Screen39SystemStates onNavigate={handleNavigate} />;
-
-      // SECTION J & K — RESPONSIVE & OVERVIEW
-      case 'responsive-views':
-        return <ScreenResponsiveViews onNavigate={handleNavigate} />;
-      case 'overview-board':
-        return <ScreenOverviewBoard onSelectScreen={handleNavigate} />;
-
-      default:
-        return <Screen01Homepage onNavigate={handleNavigate} />;
-    }
+  const handleOpenAuth = (mode: 'login' | 'signup') => {
+    setAuthMode(mode);
+    navigateTab('account');
   };
 
+  const mFar =
+    worldTheme === 'neon' ? '#131d47' : worldTheme === 'alpine' ? '#2c6887' : '#3b194d';
+  const mNear =
+    worldTheme === 'neon' ? '#0b1029' : worldTheme === 'alpine' ? '#1b4757' : '#241136';
+  const floodGlow =
+    worldTheme === 'neon' ? '#22d3ee' : worldTheme === 'alpine' ? '#fef9c3' : '#fde68a';
+
   return (
-    <div className={`app-root viewport-${showDevToolbar ? viewport : 'desktop'}`}>
-      {/* MASTER TOP TOOLBAR (Only shown when explicitly toggled by dev/reviewer) */}
-      {showDevToolbar && (
-        <ScreenSwitcherToolbar
-          currentScreenId={currentScreenId}
-          onSelectScreen={handleNavigate}
-          viewport={viewport}
-          onSetViewport={setViewport}
-        />
-      )}
+    <div className="ar-world" data-world={worldTheme}>
+      {/* ORIGINAL CINEMATIC GRAND PRIX HORIZON BACKDROP */}
+      <div className="ar-bg-scenery" aria-hidden="true">
+        <div className="ar-bg-sky" />
+        <div className="ar-bg-sun" />
 
-      {/* VIEWPORT RESIZING FRAME */}
-      <div className={`viewport-frame-container ${showDevToolbar ? viewport : 'desktop'}`}>
-        <div className="viewport-inner-canvas">
-          {/* Main Website Header (unless on Admin screen) */}
-          {!isAdminScreen && (
-            <Header
-              currentScreenId={currentScreenId}
-              onNavigate={handleNavigate}
-              coins={liveCoins}
-              level={liveLevel}
-            />
-          )}
+        {/* Layered Mountain Peaks + Grand Prix Floodlight Towers + Skyline */}
+        <svg
+          className="ar-bg-horizon-svg"
+          viewBox="0 0 1440 210"
+          preserveAspectRatio="none"
+          width="100%"
+          height="210"
+        >
+          {/* Distant Mountain Ridge */}
+          <path
+            d="M0 210 L0 135 L160 72 L320 128 L510 56 L720 122 L920 64 L1120 118 L1310 52 L1440 108 L1440 210 Z"
+            fill={mFar}
+            opacity="0.88"
+          />
+          {/* Closer Foothills & City Skyline Silhouette */}
+          <path
+            d="M0 210 L0 155 L110 120 L240 150 L390 105 L560 152 L750 115 L960 148 L1150 102 L1340 146 L1440 128 L1440 210 Z"
+            fill={mNear}
+          />
+          {/* Left & Right Grand Prix Stadium Floodlight Towers */}
+          <g stroke="rgba(255,255,255,0.28)" strokeWidth="3">
+            <line x1="110" y1="210" x2="110" y2="54" />
+            <line x1="1330" y1="210" x2="1330" y2="54" />
+          </g>
+          <g fill={floodGlow} opacity="0.9">
+            <rect x="92" y="44" width="36" height="10" rx="3" />
+            <rect x="1312" y="44" width="36" height="10" rx="3" />
+            <circle cx="110" cy="49" r="24" opacity="0.22" />
+            <circle cx="1330" cy="49" r="24" opacity="0.22" />
+          </g>
+          {/* Modern City Silhouette Left & Right */}
+          <g fill={mNear} opacity="0.95">
+            <rect x="16" y="128" width="32" height="82" />
+            <rect x="54" y="102" width="28" height="108" />
+            <rect x="148" y="138" width="44" height="72" />
+            <rect x="1220" y="124" width="40" height="86" />
+            <rect x="1268" y="96" width="34" height="114" />
+            <rect x="1372" y="132" width="42" height="78" />
+          </g>
+        </svg>
 
-          {/* REAL-TIME INCOMING CHALLENGE TOAST */}
-          {incomingChallenge && (
-            <div className="card-cream border-orange p-3 mx-4 my-2 flex-between shadow-lg" style={{ borderRadius: 12 }}>
-              <div className="flex-center gap-2">
-                <span style={{ fontSize: 24 }}>{incomingChallenge.challengerAvatar || '🏎️'}</span>
-                <div>
-                  <strong>{incomingChallenge.challengerName}</strong> challenged you to a race!
-                  <span className="text-xs text-secondary block font-mono">Room Code: {incomingChallenge.roomCode}</span>
-                </div>
-              </div>
-              <div className="flex-center gap-2">
-                <button
-                  className="btn btn-primary btn-sm flex-center gap-1"
-                  onClick={async () => {
-                    const code = incomingChallenge.roomCode;
-                    dismissChallenge();
-                    await joinPrivateRoom(code);
-                    handleNavigate('screen-18');
-                  }}
-                >
-                  <span>Accept & Race</span>
-                </button>
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={dismissChallenge}
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Active Screen View */}
-          <div className="screen-active-viewport">
-            {renderScreen()}
-          </div>
-
-          {/* Main Website Footer (unless on Admin screen or Live Race) */}
-          {!isAdminScreen && currentScreenId !== 'screen-13' && (
-            <Footer onNavigate={handleNavigate} />
-          )}
+        <div className="ar-bg-stands" />
+        <div className="ar-bg-curb" />
+        <div className="ar-bg-road">
+          <div className="ar-bg-road-dashes" />
+          <div className="ar-bg-finish-line" />
         </div>
       </div>
 
-      {/* Subtle floating dev tools toggle */}
-      <button
-        onClick={() => setShowDevToolbar(prev => !prev)}
-        style={{
-          position: 'fixed',
-          bottom: 12,
-          right: 12,
-          zIndex: 9999,
-          background: showDevToolbar ? '#EA580C' : 'rgba(30, 41, 59, 0.85)',
-          color: '#FFFFFF',
-          border: '1px solid rgba(255, 255, 255, 0.25)',
-          borderRadius: 20,
-          padding: '5px 12px',
-          fontSize: '11px',
-          fontWeight: 600,
-          cursor: 'pointer',
-          backdropFilter: 'blur(6px)',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
-          opacity: 0.7,
-          transition: 'all 0.2s ease',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '5px'
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-        onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
-        title="Toggle Screen Switcher Dev Toolbar (Ctrl+Shift+D)"
-      >
-        <span>{showDevToolbar ? '✕' : '🛠️'}</span>
-        <span>{showDevToolbar ? 'Hide Dev Bar' : 'Screens (50+)'}</span>
-      </button>
+      {/* CLEAN TOP BAR & GAME NAV */}
+      <ArcadeHeader
+        activeTab={activeTab}
+        onSelectTab={navigateTab}
+        onOpenAuth={handleOpenAuth}
+      />
+
+      {/* CENTER FRAMED ARCADE GAME STAGE */}
+      <main className="ar-stage-outer">
+        <div className="ar-stage-frame">
+          {activeTab === 'play' && (
+            <ArcadePlayStage
+              onSelectTab={navigateTab}
+              paint={paint}
+              onSelectPaint={handleSelectPaint}
+              wheelStyle={wheelStyle}
+              onCycleWheels={handleCycleWheels}
+              worldTheme={worldTheme}
+              onCycleWorld={handleCycleWorld}
+              autoStartPrivate={privateRaceActive}
+            />
+          )}
+
+          {activeTab === 'stats' && (
+            <StatsPanel onBack={() => navigateTab('play')} />
+          )}
+
+          {activeTab === 'garage' && (
+            <GaragePanel
+              onBack={() => navigateTab('play')}
+              paint={paint}
+              onSelectPaint={handleSelectPaint}
+              wheelStyle={wheelStyle}
+            />
+          )}
+
+          {activeTab === 'leaderboard' && (
+            <LeaderboardPanel onBack={() => navigateTab('play')} />
+          )}
+
+          {activeTab === 'friends' && (
+            <FriendsPanel
+              onBack={() => navigateTab('play')}
+              onEnterRoomRace={() => {
+                setPrivateRaceActive(true);
+                navigateTab('play');
+              }}
+            />
+          )}
+
+          {activeTab === 'account' && (
+            <AccountPanel
+              initialMode={authMode}
+              onSuccess={(tab) => navigateTab(tab)}
+              onBack={() => navigateTab('play')}
+            />
+          )}
+        </div>
+      </main>
+
+      {/* SLIM CLEAN FOOTER */}
+      <footer className="ar-footer">
+        &copy; {new Date().getFullYear()} KeySprint &bull; Real-Time Multiplayer Typing Racing
+      </footer>
     </div>
   );
 };
